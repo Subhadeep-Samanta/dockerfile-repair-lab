@@ -1,16 +1,18 @@
-FROM node:notfound
+FROM node:22-alpine
 
-# Copy files first, then change directory
-COPY . .
-WORKDIR /wrong
+WORKDIR /app
 
-# Broken dependency installation
-RUN npm install package-lock.json
+# Copy dependency manifests first for better layer caching
+COPY package.json package-lock.json ./
 
-# Copying a folder that doesn't exist in the project
-COPY missing-folder ./missing-folder
+# Install dependencies from the lockfile
+RUN npm ci --omit=dev
+
+# Copy the application files
+COPY app.js ./
+COPY src/ ./src/
+COPY public/ ./public/
 
 EXPOSE 8080
 
-# Incorrect startup command
-CMD ["npm", "run", "production"]
+CMD ["npm", "start"]
